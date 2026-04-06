@@ -1,6 +1,7 @@
 package com.loopang.messageservice.application;
 
 
+import com.loopang.common.exception.BadRequestException;
 import com.loopang.messageservice.application.client.AiClient;
 import com.loopang.messageservice.application.client.dto.AiGenerateResult;
 import com.loopang.messageservice.application.prompt.AiPromptBuilder;
@@ -48,6 +49,10 @@ public class MessageService {
     aiHistoryRepository.save(aiHistory);
 
 
+    boolean sent = messageSend.sendHubManager(List.of(event.slackId()), result.getMessage());
+    if (!sent) {
+      throw new BadRequestException("slack 전송 실패: orderId = " + event.orderId());
+    }
     Message message = Message.builder()
         .orderId(event.orderId())
         .receiverId(event.hubManagerId()) // 허브 담당자
@@ -57,7 +62,6 @@ public class MessageService {
 
     messageRepository.save(message);
 
-    messageSend.sendHubManager(List.of(event.slackId()) ,result.getMessage());
   }
 
 }

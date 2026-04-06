@@ -43,7 +43,6 @@ public class AiClient {
           );
 
       String rawText = response.text();
-      System.out.println("Gemini raw response: " + rawText);
 
       String cleanedText = extractJson(rawText);
       JsonNode root = objectMapper.readTree(cleanedText);

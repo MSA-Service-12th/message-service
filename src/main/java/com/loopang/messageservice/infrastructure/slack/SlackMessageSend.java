@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @Service
 public class SlackMessageSend implements MessageSend {
@@ -16,10 +17,9 @@ public class SlackMessageSend implements MessageSend {
   @Value("${slack.token}")
   private String token;
 
-
-
   @Override
   public boolean sendHubManager(List<String> slackIds, String message) {
+
     if (slackIds != null) {
 
       RestClient client = RestClient.builder()
@@ -35,10 +35,18 @@ public class SlackMessageSend implements MessageSend {
           .toEntity(JsonNode.class);
       JsonNode node = response.getBody();
 
-      if (!response.getStatusCode().is2xxSuccessful() ||  node.get("ok") == null || !node.get("ok").toString().equals("true")) return false;
+      JsonNode postNode = response.getBody();
+      if (node == null || !response.getStatusCode().is2xxSuccessful() || !node.path("ok").asBoolean(false)) {
+        return false;
+      }
+//      if (!response.getStatusCode().is2xxSuccessful() ||  node.get("ok") == null || !node.get("ok").toString().equals("true")) return false;
 
-      String channelId = node.get("channel").get("id").textValue();
-
+//      String channelId = node.get("channel").get("id").textValue();
+      JsonNode channelNode = node.path("channel").path("id");
+      if (channelNode.isMissingNode()) {
+        return false;
+      }
+      String channelId = channelNode.textValue();
 
       // 메세지 발송 처리
       response = client.post()
@@ -50,7 +58,9 @@ public class SlackMessageSend implements MessageSend {
           .toEntity(JsonNode.class);
 
 
-      return response.getStatusCode().is2xxSuccessful() && node.get("ok") != null && node.get("ok").toString().equals("true");
+
+//      return response.getStatusCode().is2xxSuccessful() && node.get("ok") != null && node.get("ok").toString().equals("true");
+      return response.getStatusCode().is2xxSuccessful() && postNode != null && postNode.path("ok").asBoolean(false);
     }
 
     return false;
