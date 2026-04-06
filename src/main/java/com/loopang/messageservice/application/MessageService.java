@@ -4,6 +4,7 @@ package com.loopang.messageservice.application;
 import com.loopang.messageservice.application.client.AiClient;
 import com.loopang.messageservice.application.client.dto.AiGenerateResult;
 import com.loopang.messageservice.application.prompt.AiPromptBuilder;
+import com.loopang.messageservice.domain.exception.ExternalMessageException;
 import com.loopang.messageservice.domain.MessageSend;
 import com.loopang.messageservice.domain.events.DeliveryCreatedEvent;
 import com.loopang.messageservice.domain.model.AiHistory;
@@ -35,7 +36,7 @@ public class MessageService {
     AiGenerateResult result = aiClient.generateMessage(requestPrompt);
 
     if (!result.isSuccess()) {
-      throw new IllegalStateException("Gemini 메시지 생성 실패: " + result.getErrorMessage());
+      throw new ExternalMessageException("Gemini 메시지 생성 실패: " + result.getErrorMessage());
     }
 
     AiHistory aiHistory = AiHistory.builder()
@@ -48,6 +49,10 @@ public class MessageService {
     aiHistoryRepository.save(aiHistory);
 
 
+    boolean sent = messageSend.sendHubManager(List.of(event.slackId()), result.getMessage());
+    if (!sent) {
+      throw new ExternalMessageException("slack 전송 실패: orderId = " + event.orderId());
+    }
     Message message = Message.builder()
         .orderId(event.orderId())
         .receiverId(event.hubManagerId()) // 허브 담당자
@@ -57,7 +62,6 @@ public class MessageService {
 
     messageRepository.save(message);
 
-    messageSend.sendHubManager(List.of(event.slackId()) ,result.getMessage());
   }
 
 }
