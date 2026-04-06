@@ -1,0 +1,33 @@
+server:
+  port: 8083
+spring:
+  profiles:
+    active: dev, topics
+  application:
+    name: message-service
+  config:
+    import: 'optional:configserver:'
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: config-server
+  kafka:
+    listener:
+      ack-mode: manual
+    # 로컬 도커 포트 9092, 9093, 9094를 모두 연결합니다.
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    properties:
+      # 로컬 연습용이므로 보안 프로토콜은 PLAINTEXT를 사용합니다.
+      security.protocol: PLAINTEXT
+    ssl:
+      trust-store-location: ""
+      trust-store-password: ""
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:18761/eureka}
+slack:
+  token: ${SLACK_USER_TOKEN}
