@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class MessageResponseDto {
-    private UUID id;
+  private UUID id;
 
   public static MessageResponseDto from(Message message) {
     return new MessageResponseDto(message.getId());

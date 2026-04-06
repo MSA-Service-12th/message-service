@@ -1,6 +1,6 @@
 package com.loopang.messageservice.domain.exception;
 
-import jakarta.ws.rs.NotFoundException;
+import com.loopang.common.exception.NotFoundException;
 
 public class MessageNotFoundException extends NotFoundException {
 

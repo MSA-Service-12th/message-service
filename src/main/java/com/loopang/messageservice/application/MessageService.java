@@ -71,7 +71,7 @@ public class MessageService {
 
 
   public MessageResponseDto delete(UUID id, UserType userType) {
-    if (userType == null || userType == UserType.PENDING) {
+    if (userType != UserType.MASTER) {
       throw new MessageForbiddenException("권한이 없습니다. 마스터 권한 사용자만 메시지를 삭제할 수 있습니다.");
     }
     Message message = messageRepository.findById(id).orElseThrow(

@@ -1,6 +1,6 @@
 package com.loopang.messageservice.domain.exception;
 
-import jakarta.ws.rs.ForbiddenException;
+import com.loopang.common.exception.ForbiddenException;
 
 public class MessageForbiddenException extends ForbiddenException {
 
