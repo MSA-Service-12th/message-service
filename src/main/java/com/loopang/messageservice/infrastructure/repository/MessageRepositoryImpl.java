@@ -2,6 +2,8 @@ package com.loopang.messageservice.infrastructure.repository;
 
 import com.loopang.messageservice.domain.model.Message;
 import com.loopang.messageservice.domain.repository.MessageRepository;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -14,5 +16,10 @@ public class MessageRepositoryImpl implements MessageRepository {
   @Override
   public void save(Message message) {
     jpaRepository.save(message);
+  }
+
+  @Override
+  public Optional<Message> findById(UUID id) {
+    return jpaRepository.findById(id);
   }
 }
