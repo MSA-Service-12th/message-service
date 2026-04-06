@@ -7,17 +7,23 @@ import com.loopang.messageservice.application.prompt.AiPromptBuilder;
 import com.loopang.messageservice.domain.exception.ExternalMessageException;
 import com.loopang.messageservice.domain.MessageSend;
 import com.loopang.messageservice.domain.events.DeliveryCreatedEvent;
+import com.loopang.messageservice.domain.exception.MessageForbiddenException;
+import com.loopang.messageservice.domain.exception.MessageNotFoundException;
 import com.loopang.messageservice.domain.model.AiHistory;
 import com.loopang.messageservice.domain.model.Message;
+import com.loopang.messageservice.domain.model.UserType;
 import com.loopang.messageservice.domain.repository.AiHistoryRepository;
 import com.loopang.messageservice.domain.repository.MessageRepository;
+import com.loopang.messageservice.presentation.dto.MessageResponseDto;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class MessageService {
 
   private final AiPromptBuilder aiPromptBuilder;
@@ -28,7 +34,6 @@ public class MessageService {
 
 
   // 배송 생성 -> 메시지 생성
-  @Transactional
   public void createAiMessage(DeliveryCreatedEvent event) {
     String requestPrompt = aiPromptBuilder.buildRequest(event);
 
@@ -64,4 +69,15 @@ public class MessageService {
 
   }
 
+
+  public MessageResponseDto delete(UUID id, UserType userType) {
+    if (userType == null || userType == UserType.PENDING) {
+      throw new MessageForbiddenException("권한이 없습니다. 마스터 권한 사용자만 메시지를 삭제할 수 있습니다.");
+    }
+    Message message = messageRepository.findById(id).orElseThrow(
+        () -> new MessageNotFoundException("존재하지 않는 메시지입니다."));
+
+    message.delete();
+    return MessageResponseDto.from(message);
+  }
 }
