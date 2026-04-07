@@ -7,17 +7,21 @@ import com.loopang.messageservice.application.prompt.AiPromptBuilder;
 import com.loopang.messageservice.domain.exception.ExternalMessageException;
 import com.loopang.messageservice.domain.MessageSend;
 import com.loopang.messageservice.domain.events.DeliveryCreatedEvent;
-import com.loopang.messageservice.domain.exception.MessageForbiddenException;
 import com.loopang.messageservice.domain.exception.MessageNotFoundException;
 import com.loopang.messageservice.domain.model.AiHistory;
 import com.loopang.messageservice.domain.model.Message;
 import com.loopang.messageservice.domain.model.UserType;
 import com.loopang.messageservice.domain.repository.AiHistoryRepository;
 import com.loopang.messageservice.domain.repository.MessageRepository;
+import com.loopang.messageservice.domain.service.RoleCheck;
+import com.loopang.messageservice.presentation.dto.GetAiMessage;
 import com.loopang.messageservice.presentation.dto.MessageResponseDto;
+import com.loopang.messageservice.presentation.dto.MessageResponseDto.GetMessage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +35,7 @@ public class MessageService {
   private final AiHistoryRepository aiHistoryRepository;
   private final MessageRepository messageRepository;
   private final MessageSend messageSend;
+  private final RoleCheck roleCheck;
 
 
   // 배송 생성 -> 메시지 생성
@@ -71,13 +76,48 @@ public class MessageService {
 
 
   public MessageResponseDto delete(UUID id, UserType userType) {
-    if (userType != UserType.MASTER) {
-      throw new MessageForbiddenException("권한이 없습니다. 마스터 권한 사용자만 메시지를 삭제할 수 있습니다.");
-    }
+
+    checkDeletable(userType, roleCheck);
     Message message = messageRepository.findById(id).orElseThrow(
         () -> new MessageNotFoundException("존재하지 않는 메시지입니다."));
 
     message.delete();
     return MessageResponseDto.from(message);
+  }
+
+
+  // 단건 조회
+  public GetMessage getMessage(UUID id, UserType userType) {
+    roleCheck.checkSearch(userType);
+
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new MessageNotFoundException("존재하지 않는 메시지입니다."));
+
+    return GetMessage.from(message);
+  }
+
+  // 전체 조회
+  public Page<GetMessage> searchMessage(UserType userType, Pageable pageable) {
+    roleCheck.checkSearch(userType);
+    return messageRepository.findAll(pageable).map(GetMessage::from);
+  }
+
+  private void checkDeletable(UserType userType, RoleCheck roleCheck) {
+    roleCheck.checkDelete(userType);
+  }
+
+  // ai 단건 조회
+  public GetAiMessage getAiMessage(UUID id, UserType userType) {
+    roleCheck.checkSearch(userType);
+    AiHistory aiHistory = aiHistoryRepository.findById(id)
+        .orElseThrow(() -> new MessageNotFoundException("존재하지 않는 메시지입니다."));
+
+    return GetAiMessage.from(aiHistory);
+  }
+
+  // ai 전체 조회
+  public Page<GetAiMessage> searchAiMessage(UserType userType, Pageable pageable) {
+    roleCheck.checkSearch(userType);
+    return aiHistoryRepository.findAll(pageable).map(GetAiMessage::from);
   }
 }
