@@ -5,6 +5,8 @@ import com.loopang.messageservice.domain.repository.MessageRepository;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -21,5 +23,10 @@ public class MessageRepositoryImpl implements MessageRepository {
   @Override
   public Optional<Message> findById(UUID id) {
     return jpaRepository.findById(id);
+  }
+
+  @Override
+  public Page<Message> findAll(Pageable pageable) {
+    return jpaRepository.findAll(pageable);
   }
 }
